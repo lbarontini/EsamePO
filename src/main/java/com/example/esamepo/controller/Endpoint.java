@@ -75,14 +75,14 @@ public class Endpoint {
             for (int tldIndex = 0; tldIndex < 10; tldIndex++) {
 
                 try {
-                    URL url = new URL("https://api.domainsdb.info/v1/info/stat/" + tlds.get(tldIndex).getName());
+                    String thisTLDName = tlds.get(tldIndex).getName();
+                    URL url = new URL("https://api.domainsdb.info/v1/info/stat/" + thisTLDName);
 
                     //objectMapper.readTree(url) can return an unexpected JSON, which means .get(String) won't work properly
                     JsonNode arrayNode = objectMapper.readTree(url).get("statistics");
                     Iterator<JsonNode> ite = arrayNode.elements();
                     JsonNode firstNode = ite.next();
 
-                    String thisTLDName = firstNode.get("zone").asText();
                     int thisTLDSize = firstNode.get("total").asInt();
 
                     //Not populating the description here, waiting for other endpoint to be implemented so it can be reused
