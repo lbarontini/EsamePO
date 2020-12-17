@@ -84,9 +84,9 @@ public class Endpoint {
                     JsonNode firstNode = ite.next();
 
                     int thisTLDSize = firstNode.get("total").asInt();
+                    ArrayList<String> thisTLDDescription = info(thisTLDName).getBody().getDescription();
 
-                    //Not populating the description here, waiting for other endpoint to be implemented so it can be reused
-                    TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize);
+                    TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize, thisTLDDescription);
                     rankedTLDs.add(generatedObject);
 
                 } catch (IOException | NoSuchElementException | ClassCastException e) {
