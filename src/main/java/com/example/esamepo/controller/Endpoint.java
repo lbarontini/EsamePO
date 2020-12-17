@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,32 +24,38 @@ import java.util.NoSuchElementException;
 public class Endpoint {
 
     @GetMapping("/listAll")
-    public ArrayList<TldClass> listAll() {
+    public ResponseEntity<ArrayList<TldClass>> listAll() {
+
         ObjectMapper objectMapper = new ObjectMapper();
         ArrayList<TldClass> tlds = new ArrayList<>();
 
         try {
             URL url = new URL("https://api.domainsdb.info/v1/info/tld/");
-            HttpURLConnection httpcon = (HttpURLConnection) url.openConnection();
-            InputStream is = httpcon.getInputStream();
-            JsonNode jsonNode = objectMapper.readTree(is).get("includes");
-            //checking response code dot know if it is useful for handling errors
-            if(httpcon.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                Iterator<JsonNode> ite = jsonNode.elements();
-                while (ite.hasNext()) {
-                    JsonNode temp = ite.next();
-                    tlds.add(objectMapper.treeToValue(temp, TldClass.class));
-                }
-            }else {
-                httpcon.disconnect();
-                return null;
+
+            JsonNode jsonNode = objectMapper.readTree(url).get("includes");
+
+            if (jsonNode == null){
+                throw new ApiSchemaException("API error",
+                                             "The API schema has changed: https://api.domainsdb.info/v1/info/tld",
+                                             "Please contact the server administrator");
             }
-            httpcon.disconnect();
-            return tlds;
+
+            Iterator<JsonNode> ite = jsonNode.elements();
+
+            while (ite.hasNext()) {
+                JsonNode temp = ite.next();
+                tlds.add(objectMapper.treeToValue(temp, TldClass.class));
+            }
+
         } catch (IOException | NoSuchElementException | ClassCastException e) {
-            e.printStackTrace();
-            return null;
+
+            throw new ApiSchemaException("API error",
+                                         "The API schema has changed: https://api.domainsdb.info/v1/info/tld",
+                                         "Please contact the server administrator");
+
         }
+
+        return ResponseEntity.ok(tlds);
     }
 
 
@@ -64,11 +68,7 @@ public class Endpoint {
             ObjectMapper objectMapper = new ObjectMapper();
 
             //Reusing other endpoint here
-            ArrayList<TldClass> tlds = listAll();
-            if (tlds == null){
-                return null;
-            }
-
+            ArrayList<TldClass> tlds = listAll().getBody();
             ArrayList<TldDescription> rankedTLDs = new ArrayList <>();
 
             //This should iterate over all TLDs, but API is slow so will only fetch first 10 for the demo
@@ -124,7 +124,10 @@ public class Endpoint {
 
         } else {
 
-            return null;
+            throw new BadRequestException("API error",
+                                          "Invalid ranking parameters",
+                                          "Use /rank?type=size to rank by TLD size and /rank?type=keyword&tld={tld} to rank by most used keywords within a TLD");
+
         }
 
     }
