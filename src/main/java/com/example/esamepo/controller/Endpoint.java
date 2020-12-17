@@ -84,7 +84,7 @@ public class Endpoint {
                     //may not be present
                     if (arrayNode == null){
                         throw new ApiSchemaException("API error",
-                                                     "The API schema has changed: https://api.domainsdb.info/v1/info/tld",
+                                                     "The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
                                                      "Please contact the server administrator");
                     }
 
@@ -103,7 +103,7 @@ public class Endpoint {
                     //Seems like you can't distinguish between a connection error and nonexistent endpoint
                     //on the upstream API using readtree(url): both throw IOException
                     throw new ApiSchemaException("API error",
-                                                 "The API schema has changed: https://api.domainsdb.info/v1/info/tld",
+                                                 "The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
                                                  "Please contact the server administrator");
                 }
 
