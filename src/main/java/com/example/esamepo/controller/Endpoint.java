@@ -56,8 +56,8 @@ public class Endpoint {
 
 
     @GetMapping("/rank")
-    public ArrayList<TldDescription> rank(@RequestParam(name = "type") String type,
-                                          @RequestParam(name = "tld", required = false) String tld) {
+    public ResponseEntity<ArrayList<TldDescription>> rank(@RequestParam(name = "type") String type,
+                                                          @RequestParam(name = "tld", required = false) String tld){
 
         if (type.equals("size")) {
 
@@ -78,23 +78,33 @@ public class Endpoint {
                     String thisTLDName = tlds.get(tldIndex).getName();
                     URL url = new URL("https://api.domainsdb.info/v1/info/stat/" + thisTLDName);
 
-                    //objectMapper.readTree(url) can return an unexpected JSON, which means .get(String) won't work properly
                     JsonNode arrayNode = objectMapper.readTree(url).get("statistics");
+
+                    //objectMapper.readTree(url) can return an unexpected JSON, which means the statistics array
+                    //may not be present
+                    if (arrayNode == null){
+                        throw new ApiSchemaException("API error",
+                                                     "The API schema has changed: https://api.domainsdb.info/v1/info/tld",
+                                                     "Please contact the server administrator");
+                    }
+
                     Iterator<JsonNode> ite = arrayNode.elements();
                     JsonNode firstNode = ite.next();
 
                     int thisTLDSize = firstNode.get("total").asInt();
+                    //Exceptions thrown by info(thisTLDName) are already handled automatically
                     ArrayList<String> thisTLDDescription = info(thisTLDName).getBody().getDescription();
 
                     TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize, thisTLDDescription);
                     rankedTLDs.add(generatedObject);
 
-                } catch (IOException | NoSuchElementException | ClassCastException e) {
+                } catch (NoSuchElementException | ClassCastException | IOException e) {
 
-                    //Handle errors
-                    e.printStackTrace();
-
-                    return null;
+                    //Seems like you can't distinguish between a connection error and nonexistent endpoint
+                    //on the upstream API using readtree(url): both throw IOException
+                    throw new ApiSchemaException("API error",
+                                                 "The API schema has changed: https://api.domainsdb.info/v1/info/tld",
+                                                 "Please contact the server administrator");
                 }
 
             }
@@ -104,7 +114,8 @@ public class Endpoint {
             //From largest to smallest TLD
             Collections.reverse(rankedTLDs);
 
-            return rankedTLDs;
+            return ResponseEntity.ok(rankedTLDs);
+
         } else if (type.equals("keyword")){
 
             //Handle ranking by keyword
