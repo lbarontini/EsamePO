@@ -2,26 +2,26 @@ package com.example.esamepo.model;
 
 import java.util.ArrayList;
 
-public class TLDDescription extends TldClass implements Comparable<TLDDescription> {
+public class TldDescription extends TldClass implements Comparable<TldDescription> {
 
     private int domainsCount;
     private ArrayList<String> description;
 
-    public int compareTo(TLDDescription other) {
+    public int compareTo(TldDescription other) {
         return Integer.compare(this.domainsCount, other.getDomainsCount());
     }
 
-    public TLDDescription(String name, int domainsCount, ArrayList<String> description) {
+    public TldDescription(String name, int domainsCount, ArrayList<String> description) {
         super(name);
         this.domainsCount = domainsCount;
         this.description = description;
     }
-    public TLDDescription(String name, ArrayList<String> description) {
+    public TldDescription(String name, ArrayList<String> description) {
         super(name);
         this.description = description;
     }
 
-    public TLDDescription(String name, int domainsCount) {
+    public TldDescription(String name, int domainsCount) {
         super(name);
         this.domainsCount = domainsCount;
     }

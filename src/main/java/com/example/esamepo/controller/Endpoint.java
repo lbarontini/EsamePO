@@ -1,11 +1,14 @@
 package com.example.esamepo.controller;
 
-import com.example.esamepo.model.TLDDescription;
+import com.example.esamepo.exception.ApiSchemaException;
+import com.example.esamepo.exception.BadRequestException;
+import com.example.esamepo.model.TldDescription;
 import com.example.esamepo.model.TldClass;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,10 +54,10 @@ public class Endpoint {
         }
     }
 
-    //todo isn't better if we use rank whith no parameter for ranking by domains size?
+
     @GetMapping("/rank")
-    public ArrayList<TLDDescription> rank(@RequestParam(name = "type") String type,
-            @RequestParam(name = "tld", required = false) String tld) {
+    public ArrayList<TldDescription> rank(@RequestParam(name = "type") String type,
+                                          @RequestParam(name = "tld", required = false) String tld) {
 
         if (type.equals("size")) {
 
@@ -66,7 +69,7 @@ public class Endpoint {
                 return null;
             }
 
-            ArrayList<TLDDescription> rankedTLDs = new ArrayList <>();
+            ArrayList<TldDescription> rankedTLDs = new ArrayList <>();
 
             //This should iterate over all TLDs, but API is slow so will only fetch first 10 for the demo
             for (int tldIndex = 0; tldIndex < 10; tldIndex++) {
@@ -83,8 +86,7 @@ public class Endpoint {
                     int thisTLDSize = firstNode.get("total").asInt();
 
                     //Not populating the description here, waiting for other endpoint to be implemented so it can be reused
-                    //todo isn't better if we use another subclass for description?
-                    TLDDescription generatedObject = new TLDDescription(thisTLDName, thisTLDSize);
+                    TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize);
                     rankedTLDs.add(generatedObject);
 
                 } catch (IOException | NoSuchElementException | ClassCastException e) {
@@ -103,7 +105,6 @@ public class Endpoint {
             Collections.reverse(rankedTLDs);
 
             return rankedTLDs;
-
         } else if (type.equals("keyword")){
 
             //Handle ranking by keyword
@@ -118,30 +119,28 @@ public class Endpoint {
     }
 
     @GetMapping("/info")
-    public TLDDescription info(@RequestParam(name = "tld", defaultValue = "null") String tld) {
+    public ResponseEntity<TldDescription> info(@RequestParam(name = "tld", defaultValue = "null") String tld) throws BadRequestException {
 
         ObjectMapper objectMapper = new ObjectMapper();
         ArrayList<String> description = new ArrayList<>();
         try {
             URL url = new URL("https://api.domainsdb.info/v1/info/tld/" + tld);
-            HttpURLConnection httpcon = (HttpURLConnection) url.openConnection();
-            InputStream is = httpcon.getInputStream();
+            JsonNode jsonNode= objectMapper.readTree(url).get("description");
+            //jsonnode can be null if the schema of the api changes
+            if (jsonNode ==null)
+                throw new ApiSchemaException("Api error","the api schema is changed in: https://api.domainsdb.info/v1/info/tld","please contact the server administrator");
 
-            //checking response code dot know if it is useful for handling errors
-            if(httpcon.getResponseCode() == HttpURLConnection.HTTP_OK) {
-               JsonNode jsonNode= objectMapper.readTree(is).get("description");
-                Iterator<JsonNode> ite = jsonNode.elements();
-                while (ite.hasNext()) {
-                    JsonNode temp = ite.next();
-                    description.add(temp.asText());
-                }
+            Iterator<JsonNode> ite = jsonNode.elements();
+            while (ite.hasNext()) {
+                JsonNode temp = ite.next();
+                description.add(temp.asText());
             }
-        }catch (IOException |NoSuchElementException | ClassCastException e)
+        }catch (IOException e)
         {
-            e.printStackTrace();
-            return null;
+           throw new BadRequestException("API Error","The selected TLD does Not Exist","use /listAll for a list of tlds");
+        }catch (NoSuchElementException | ClassCastException e){
+            throw new ApiSchemaException("Api error","the api schema is changed in: https://api.domainsdb.info/v1/info/tld","please contact the server administrator");
         }
-        // i've used the description class that u kindly implemented
-        return new TLDDescription(tld, description);
+        return ResponseEntity.ok(new TldDescription(tld, description));
     }
 }
