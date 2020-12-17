@@ -2,6 +2,8 @@ package com.example.esamepo.exception;
 
 public class BadRequestException extends RuntimeException{
 
+    private static final long serialVersionUID = 1L;
+
     private String message;
     private String details;
     private String todo;
