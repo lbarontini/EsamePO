@@ -1,7 +1,7 @@
 package com.example.esamepo.controller;
 
-import com.example.esamepo.exception.ApiSchemaException;
-import com.example.esamepo.exception.BadRequestException;
+import com.example.esamepo.exception.ServerException;
+import com.example.esamepo.exception.UserException;
 import com.example.esamepo.model.TldDescription;
 import com.example.esamepo.model.TldClass;
 
@@ -15,10 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.net.UnknownHostException;
+import java.util.*;
 
 @RestController
 public class Endpoint {
@@ -35,8 +33,7 @@ public class Endpoint {
             JsonNode jsonNode = objectMapper.readTree(url).get("includes");
 
             if (jsonNode == null){
-                throw new ApiSchemaException("API error",
-                                             "The API schema has changed: https://api.domainsdb.info/v1/info/tld",
+                throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/tld",
                                              "Please contact the server administrator");
             }
 
@@ -49,10 +46,9 @@ public class Endpoint {
 
         } catch (IOException | NoSuchElementException | ClassCastException e) {
 
-            throw new ApiSchemaException("API error",
-                                         "The API schema has changed: https://api.domainsdb.info/v1/info/tld",
+            throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/tld",
                                          "Please contact the server administrator");
-
+        //todo improve exception handling
         }
 
         return ResponseEntity.ok(tlds);
@@ -75,16 +71,17 @@ public class Endpoint {
             for (int tldIndex = 0; tldIndex < 10; tldIndex++) {
 
                 try {
+                    assert tlds != null;
                     String thisTLDName = tlds.get(tldIndex).getName();
-                    URL url = new URL("https://api.domainsdb.info/v1/info/stat/" + thisTLDName);
+                    //URL url = new URL("https://api.domainsdb.info/v1/info/stat/" + thisTLDName);
+                    URL url = new URL("https://api.domainsdb.invalid");
 
                     JsonNode arrayNode = objectMapper.readTree(url).get("statistics");
 
                     //objectMapper.readTree(url) can return an unexpected JSON, which means the statistics array
                     //may not be present
                     if (arrayNode == null){
-                        throw new ApiSchemaException("API error",
-                                                     "The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+                        throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
                                                      "Please contact the server administrator");
                     }
 
@@ -98,19 +95,24 @@ public class Endpoint {
                     TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize, thisTLDDescription);
                     rankedTLDs.add(generatedObject);
 
-                } catch (NoSuchElementException | ClassCastException | IOException e) {
+                } catch(IOException e) {
+                    throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+                                                 "Please contact the server administrator");
+
+                }catch (NoSuchElementException | ClassCastException e ) {
 
                     //Seems like you can't distinguish between a connection error and nonexistent endpoint
                     //on the upstream API using readtree(url): both throw IOException
-                    throw new ApiSchemaException("API error",
-                                                 "The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
-                                                 "Please contact the server administrator");
+//                    throw new ApiSchemaException("API error exception",
+//                                                 "The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+//                                                 "Please contact the server administrator");
+                    e.printStackTrace();
                 }
+
 
             }
 
             Collections.sort(rankedTLDs);
-
             //From largest to smallest TLD
             Collections.reverse(rankedTLDs);
 
@@ -121,40 +123,45 @@ public class Endpoint {
             //Handle ranking by keyword
 
             return null;
-
-        } else {
-
-            throw new BadRequestException("API error",
-                                          "Invalid ranking parameters",
-                                          "Use /rank?type=size to rank by TLD size and /rank?type=keyword&tld={tld} to rank by most used keywords within a TLD");
-
         }
-
+        else {
+            throw new UserException("Invalid ranking parameters",
+                                          "Use /rank?type=size to rank by TLD size and /rank?type=keyword&tld={tld} to rank by most used keywords within a TLD");
+        }
     }
 
     @GetMapping("/info")
-    public ResponseEntity<TldDescription> info(@RequestParam(name = "tld", defaultValue = "null") String tld) throws BadRequestException {
+    public ResponseEntity<TldDescription> info(@RequestParam(name = "tld", defaultValue = "null") String tld) throws UserException {
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        ArrayList<String> description = new ArrayList<>();
-        try {
-            URL url = new URL("https://api.domainsdb.info/v1/info/tld/" + tld);
-            JsonNode jsonNode= objectMapper.readTree(url).get("description");
-            //jsonnode can be null if the schema of the api changes
-            if (jsonNode ==null)
-                throw new ApiSchemaException("Api error","the api schema is changed in: https://api.domainsdb.info/v1/info/tld","please contact the server administrator");
+        ArrayList<TldClass> tlds = listAll().getBody();
 
-            Iterator<JsonNode> ite = jsonNode.elements();
-            while (ite.hasNext()) {
-                JsonNode temp = ite.next();
-                description.add(temp.asText());
-            }
-        }catch (IOException e)
-        {
-           throw new BadRequestException("API Error","The selected TLD does Not Exist","use /listAll for a list of tlds");
-        }catch (NoSuchElementException | ClassCastException e){
-            throw new ApiSchemaException("Api error","the api schema is changed in: https://api.domainsdb.info/v1/info/tld","please contact the server administrator");
-        }
-        return ResponseEntity.ok(new TldDescription(tld, description));
+        assert tlds != null;
+        if (tlds.contains(new TldClass(tld))) {
+           ObjectMapper objectMapper = new ObjectMapper();
+           ArrayList<String> description = new ArrayList<>();
+           try {
+               URL url = new URL("https://api.domainsdb.info/v1/info/tld/" + tld);
+               JsonNode jsonNode = objectMapper.readTree(url).get("description");
+               //jsonNode can be null if the schema of the api changes
+               if (jsonNode == null)
+                   throw new ServerException("the api schema is changed in: https://api.domainsdb.info/v1/info/tld",
+                           "please contact the server administrator");
+
+               Iterator<JsonNode> ite = jsonNode.elements();
+               while (ite.hasNext()) {
+                   JsonNode temp = ite.next();
+                   description.add(temp.asText());
+               }
+           } catch (IOException e) {
+               //launched if the server is not responding
+               throw new ServerException("https://api.domainsdb is not responding", "please contact the server administrator");
+           } catch (Exception e) {
+               //general exeption handler
+               throw new ServerException("Internal error", "please contact the server administrator");
+           }
+           return ResponseEntity.ok(new TldDescription(tld, description));
+       }else
+           throw new UserException("The selected TLD does Not Exist",
+                   "use /listAll for a list of all tlds");
     }
 }

@@ -10,15 +10,15 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class ExceptionInterceptor extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(BadRequestException.class)
-    public final ResponseEntity<Object> handleBadRequestException(BadRequestException ex) {
+    @ExceptionHandler(UserException.class)
+    public final ResponseEntity<Object> handleBadRequestException(UserException ex) {
         MyExceptionSchema exceptionResponse = new MyExceptionSchema(ex.getMessage(), ex.getDetails(), ex.getTodo());
-        return new ResponseEntity<>(exceptionResponse, HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(ApiSchemaException.class)
-    public final ResponseEntity<Object> handleApiSchemaException(ApiSchemaException ex) {
+    @ExceptionHandler(ServerException.class)
+    public final ResponseEntity<Object> handleConnectivityException(ServerException ex) {
         MyExceptionSchema exceptionResponse = new MyExceptionSchema(ex.getMessage(), ex.getDetails(), ex.getTodo());
-        return new ResponseEntity<>(exceptionResponse, HttpStatus.I_AM_A_TEAPOT);
+        return new ResponseEntity<>(exceptionResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

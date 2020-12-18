@@ -1,20 +1,18 @@
 package com.example.esamepo.exception;
 //this is the schema to use for custom springboot exceptions
-public class ApiSchemaException extends RuntimeException {
+public class ServerException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
-
-    private String message;
+    private static final String message= "ServerException";
     private String details;
     private String todo;
 
-    public ApiSchemaException() {
+    public ServerException() {
         super();
     }
 
-    public ApiSchemaException(String message, String details, String todo) {
+    public ServerException( String details, String todo) {
         super.printStackTrace();
-        this.message = message;
         this.details = details;
         this.todo = todo;
     }
@@ -22,10 +20,6 @@ public class ApiSchemaException extends RuntimeException {
     @Override
     public String getMessage() {
         return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 
     public String getDetails() {

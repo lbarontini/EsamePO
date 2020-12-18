@@ -1,18 +1,17 @@
 package com.example.esamepo.exception;
 
-public class BadRequestException extends RuntimeException{
+public class UserException extends RuntimeException{
 
     private static final long serialVersionUID = 1L;
 
-    private String message;
+    private static final String message= "UserException";
     private String details;
     private String todo;
 
-    public BadRequestException() {
+    public UserException() {
     }
 
-    public BadRequestException(String message, String details, String todo) {
-        this.message = message;
+    public UserException( String details, String todo) {
         this.details = details;
         this.todo = todo;
     }
@@ -20,10 +19,6 @@ public class BadRequestException extends RuntimeException{
     @Override
     public String getMessage() {
         return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 
     public String getDetails() {
