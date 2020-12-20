@@ -3,6 +3,7 @@ package com.example.esamepo.controller;
 import com.example.esamepo.exception.ServerException;
 import com.example.esamepo.exception.UserException;
 import com.example.esamepo.model.TldDescription;
+import com.example.esamepo.utils.JSONUtils;
 import com.example.esamepo.model.TLDStats;
 import com.example.esamepo.model.TldClass;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,8 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 @RestController
 public class Endpoint {
@@ -28,32 +31,14 @@ public class Endpoint {
     @GetMapping("/listAll")
     public ResponseEntity<ArrayList<TldClass>> listAll() {
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        ArrayList<TldClass> tlds = new ArrayList<>();
+        JsonNode tldsNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/tld/").get("includes");
 
-        try {
-            URL url = new URL("https://api.domainsdb.info/v1/info/tld/");
-
-            JsonNode jsonNode = objectMapper.readTree(url).get("includes");
-
-            if (jsonNode == null) {
-                throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/tld",
-                        "Please contact the server administrator");
-            }
-
-            Iterator<JsonNode> ite = jsonNode.elements();
-
-            while (ite.hasNext()) {
-                JsonNode temp = ite.next();
-                tlds.add(objectMapper.treeToValue(temp, TldClass.class));
-            }
-
-        } catch (IOException | NoSuchElementException | ClassCastException e) {
-
+        if (tldsNode == null) {
             throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/tld",
-                    "Please contact the server administrator");
-            // todo improve exception handling
+                                      "Please contact the server administrator");
         }
+
+        ArrayList<TldClass> tlds = JSONUtils.jsonArrayToArrayList(tldsNode, TldClass.class);
 
         return ResponseEntity.ok(tlds);
     }
@@ -77,8 +62,7 @@ public class Endpoint {
                 try {
                     assert tlds != null;
                     String thisTLDName = tlds.get(tldIndex).getName();
-                    // URL url = new URL("https://api.domainsdb.info/v1/info/stat/" + thisTLDName);
-                    URL url = new URL("https://api.domainsdb.invalid");
+                    URL url = new URL("https://api.domainsdb.info/v1/info/stat/" + thisTLDName);
 
                     JsonNode arrayNode = objectMapper.readTree(url).get("statistics");
 
