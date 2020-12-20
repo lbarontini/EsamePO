@@ -23,7 +23,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 @RestController
 public class Endpoint {
@@ -44,79 +43,47 @@ public class Endpoint {
     }
 
     @GetMapping("/rank")
-    public ResponseEntity<ArrayList<TldDescription>> rank(@RequestParam(name = "type") String type,
-            @RequestParam(name = "tld", required = false) String tld) {
+    public ResponseEntity<ArrayList<TldDescription>> rank(@RequestParam(name = "count", required = false, defaultValue = "10") int count) {
 
-        if (type.equals("size")) {
+        ArrayList<TldClass> tlds = listAll().getBody();
+        ArrayList<TldDescription> rankedTLDs = new ArrayList<>();
 
-            ObjectMapper objectMapper = new ObjectMapper();
+        // This should iterate over all TLDs, but API is slow so will only fetch first {count} for the demo
+        for (int tldIndex = 0; tldIndex < count; tldIndex++) {
 
-            // Reusing other endpoint here
-            ArrayList<TldClass> tlds = listAll().getBody();
-            ArrayList<TldDescription> rankedTLDs = new ArrayList<>();
+            String thisTLDName = tlds.get(tldIndex).getName();
+            JsonNode arrayNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/stat/" + thisTLDName).get("statistics");
 
-            // This should iterate over all TLDs, but API is slow so will only fetch first
-            // 10 for the demo
-            for (int tldIndex = 0; tldIndex < 10; tldIndex++) {
-
-                try {
-                    assert tlds != null;
-                    String thisTLDName = tlds.get(tldIndex).getName();
-                    URL url = new URL("https://api.domainsdb.info/v1/info/stat/" + thisTLDName);
-
-                    JsonNode arrayNode = objectMapper.readTree(url).get("statistics");
-
-                    // objectMapper.readTree(url) can return an unexpected JSON, which means the
-                    // statistics array
-                    // may not be present
-                    if (arrayNode == null) {
-                        throw new ServerException(
-                                "The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
-                                "Please contact the server administrator");
-                    }
-
-                    Iterator<JsonNode> ite = arrayNode.elements();
-                    JsonNode firstNode = ite.next();
-
-                    int thisTLDSize = firstNode.get("total").asInt();
-                    // Exceptions thrown by info(thisTLDName) are already handled automatically
-                    ArrayList<String> thisTLDDescription = info(thisTLDName).getBody().getDescription();
-
-                    TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize, thisTLDDescription);
-                    rankedTLDs.add(generatedObject);
-
-                } catch (IOException e) {
-                    throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
-                            "Please contact the server administrator");
-
-                } catch (NoSuchElementException | ClassCastException e) {
-
-                    // Seems like you can't distinguish between a connection error and nonexistent
-                    // endpoint
-                    // on the upstream API using readtree(url): both throw IOException
-                    // throw new ApiSchemaException("API error exception",
-                    // "The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
-                    // "Please contact the server administrator");
-                    e.printStackTrace();
-                }
-
+            if (arrayNode == null) {
+                throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+                                          "Please contact the server administrator");
             }
 
-            Collections.sort(rankedTLDs);
-            // From largest to smallest TLD
-            Collections.reverse(rankedTLDs);
+            Iterator<JsonNode> ite = arrayNode.elements();
+            JsonNode firstNode = ite.next();
 
-            return ResponseEntity.ok(rankedTLDs);
+            try {
+                //Returns null if field is missing
+                int thisTLDSize = firstNode.get("total").asInt();
 
-        } else if (type.equals("keyword")) {
+                // Exceptions thrown by info(thisTLDName) are already handled automatically
+                ArrayList<String> thisTLDDescription = info(thisTLDName).getBody().getDescription();
 
-            // Handle ranking by keyword
+                TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize, thisTLDDescription);
+                rankedTLDs.add(generatedObject);
 
-            return null;
-        } else {
-            throw new UserException("Invalid ranking parameters",
-                    "Use /rank?type=size to rank by TLD size and /rank?type=keyword&tld={tld} to rank by most used keywords within a TLD");
+            } catch (NullPointerException e){
+                throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+                                          "Please contact the server administrator");
+            }
+
         }
+
+        Collections.sort(rankedTLDs);
+        // From largest to smallest TLD
+        Collections.reverse(rankedTLDs);
+
+        return ResponseEntity.ok(rankedTLDs);
     }
 
     @PostMapping(path = "/stats", consumes = "application/json", produces = "application/json")
