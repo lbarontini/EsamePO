@@ -2,11 +2,8 @@ package com.example.esamepo.controller;
 
 import com.example.esamepo.exception.ServerException;
 import com.example.esamepo.exception.UserException;
-import com.example.esamepo.model.StatsOutputModel;
-import com.example.esamepo.model.TldDescription;
+import com.example.esamepo.model.*;
 import com.example.esamepo.utils.JSONUtils;
-import com.example.esamepo.model.TldStats;
-import com.example.esamepo.model.TldClass;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -141,37 +138,26 @@ public class Endpoint {
     }
 
     @GetMapping("/info")
-    public ResponseEntity<TldDescription> info(@RequestParam(name = "tld", defaultValue = "null") String tld) {
+    public ResponseEntity<TldInputModel> info(@RequestParam(name = "tld", defaultValue = "null") String tld) {
 
         ArrayList<TldClass> tlds = listAll().getBody();
-
         assert tlds != null;
         if (tlds.contains(new TldClass(tld))) {
+            JsonNode jsonNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/tld/" + tld);
+            //jsonNode can be null if the schema of the api changes
+            if (jsonNode == null)
+                throw new ServerException("the api schema is changed in: https://api.domainsdb.info/v1/info/tld",
+                        "please contact the server administrator");
             ObjectMapper objectMapper = new ObjectMapper();
-            ArrayList<String> description = new ArrayList<>();
             try {
-                URL url = new URL("https://api.domainsdb.info/v1/info/tld/" + tld);
-                JsonNode jsonNode = objectMapper.readTree(url).get("description");
-                //jsonNode can be null if the schema of the api changes
-                if (jsonNode == null)
-                    throw new ServerException("the api schema is changed in: https://api.domainsdb.info/v1/info/tld",
-                            "please contact the server administrator");
-
-                Iterator<JsonNode> ite = jsonNode.elements();
-                while (ite.hasNext()) {
-                    JsonNode temp = ite.next();
-                    description.add(temp.asText());
-                }
-            } catch (IOException e) {
-                //launched if the server is not responding
-                throw new ServerException("https://api.domainsdb is not responding", "please contact the server administrator");
-            } catch (Exception e) {
-                //general exeption handler
-                throw new ServerException("Internal error", "please contact the server administrator");
+                return ResponseEntity.ok(objectMapper.treeToValue(jsonNode, TldInputModel.class));
+            } catch (JsonProcessingException e) {
+                //also this exeption can be launched if the api schema changes
+                throw new ServerException("the api schema is changed in: https://api.domainsdb.info/v1/info/tld",
+                        "please contact the server administrator");
             }
-            return ResponseEntity.ok(new TldDescription(tld, description));
-        } else
-            throw new UserException("The selected TLD does Not Exist",
+        }
+        throw new UserException("The selected TLD does Not Exist",
                     "use /listAll for a list of all tlds");
     }
 
@@ -179,7 +165,7 @@ public class Endpoint {
     public ResponseEntity<StatsOutputModel> statistic() {
 
         ArrayList<TldClass> tlds = listAll().getBody();
-        ArrayList<TldDescription> tldList = rank("size","").getBody();
+        ArrayList<TldDescription> tldList = rank(10).getBody();
         assert tldList != null;
         TldDescription maxTld = Collections.max(tldList);
         TldDescription mintld = Collections.min(tldList);
