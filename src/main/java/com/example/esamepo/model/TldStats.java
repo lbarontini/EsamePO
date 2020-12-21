@@ -1,16 +1,17 @@
 package com.example.esamepo.model;
 
-import java.util.ArrayList;
-
-public class TLDStats extends TldClass {
+public class TldStats extends TldClass implements Comparable<TldStats> {
 
     private int matchesCount;
-    private ArrayList<String> matchingDomains;
     private String matchingWord;
-    public TLDStats(String name, int matchesCount, ArrayList<String> matchingDomains, String matchingWord) {
+
+    public int compareTo(TldStats other) {
+        return Integer.compare(this.matchesCount, other.getMatchesCount());
+    }
+
+    public TldStats(String name, int matchesCount, String matchingWord) {
         super(name);
         this.matchesCount = matchesCount;
-        this.matchingDomains = matchingDomains;
         this.matchingWord = matchingWord;
     }
 
@@ -20,14 +21,6 @@ public class TLDStats extends TldClass {
 
     public void setMatchesCount(int matchesCount) {
         this.matchesCount = matchesCount;
-    }
-
-    public ArrayList<String> getMatchingDomains() {
-        return matchingDomains;
-    }
-
-    public void setMatchingDomains(ArrayList<String> matchingDomains) {
-        this.matchingDomains = matchingDomains;
     }
 
     public String getMatchingWord() {

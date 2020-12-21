@@ -4,10 +4,9 @@ import com.example.esamepo.exception.ServerException;
 import com.example.esamepo.exception.UserException;
 import com.example.esamepo.model.TldDescription;
 import com.example.esamepo.utils.JSONUtils;
-import com.example.esamepo.model.TLDStats;
+import com.example.esamepo.model.TldStats;
 import com.example.esamepo.model.TldClass;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -37,7 +36,7 @@ public class Endpoint {
                                       "Please contact the server administrator");
         }
 
-        ArrayList<TldClass> tlds = JSONUtils.jsonArrayToArrayList(tldsNode, TldClass.class);
+        ArrayList<TldClass> tlds = JSONUtils.JsonNodeToArrayList(tldsNode, TldClass.class);
 
         return ResponseEntity.ok(tlds);
     }
@@ -48,7 +47,8 @@ public class Endpoint {
         ArrayList<TldClass> tlds = listAll().getBody();
         ArrayList<TldDescription> rankedTLDs = new ArrayList<>();
 
-        // This should iterate over all TLDs, but API is slow so will only fetch first {count} for the demo
+        // This should iterate over all TLDs, but API is slow so will only fetch first
+        // {count} for the demo
         for (int tldIndex = 0; tldIndex < count; tldIndex++) {
 
             String thisTLDName = tlds.get(tldIndex).getName();
@@ -59,11 +59,16 @@ public class Endpoint {
                                           "Please contact the server administrator");
             }
 
-            Iterator<JsonNode> ite = arrayNode.elements();
-            JsonNode firstNode = ite.next();
+            // Empty array if TLD never surveyed
+            JsonNode firstNode = arrayNode.get(0);
+
+            if (firstNode == null) {
+                throw new ServerException("Missing historical data for TLD " + thisTLDName,
+                                          "Please contact the server administrator");
+            }
 
             try {
-                //Returns null if field is missing
+                // Returns null if field is missing
                 int thisTLDSize = firstNode.get("total").asInt();
 
                 // Exceptions thrown by info(thisTLDName) are already handled automatically
@@ -72,7 +77,7 @@ public class Endpoint {
                 TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize, thisTLDDescription);
                 rankedTLDs.add(generatedObject);
 
-            } catch (NullPointerException e){
+            } catch (NullPointerException e) {
                 throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
                                           "Please contact the server administrator");
             }
@@ -87,68 +92,50 @@ public class Endpoint {
     }
 
     @PostMapping(path = "/stats", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<ArrayList<TLDStats>> stats(@RequestBody String filter) {
+    public ResponseEntity<ArrayList<TldStats>> stats(@RequestBody String filter) {
 
         ObjectMapper objectMapper = new ObjectMapper();
-
-        ArrayList<TLDStats> allTLDStats = new ArrayList<>();
+        ArrayList<TldStats> allTldStats = new ArrayList<>();
 
         try {
-            JsonNode filterNode = objectMapper.readTree(filter);
+            JsonNode inputNode = objectMapper.readTree(filter);
 
-            String tld = filterNode.get("tld").asText();
+            String inputTLD = inputNode.get("tld").asText();
+            ArrayList<String> inputWords = JSONUtils.JsonNodeToArrayList(inputNode.get("words"), String.class);
 
-            JsonNode wordsNode = filterNode.get("words");
+            ArrayList<TldClass> validTLDs = listAll().getBody();
 
-            Iterator<JsonNode> ite = wordsNode.elements();
-
-            while (ite.hasNext()) {
-                JsonNode wordNode = ite.next();
-                String singleWord = wordNode.asText();
-
-                try {
-                    URL url = new URL("https://api.domainsdb.info/v1/domains/search?domain=" + singleWord + "&zone=" + tld);
-                    JsonNode jsonNode = objectMapper.readTree(url).get("domains");
-
-                    ArrayList<String> matchingDomains = new ArrayList<>();
-                    Iterator<JsonNode> ite2 = jsonNode.elements();
-
-                    while (ite2.hasNext()) {
-                        JsonNode domainNode = ite2.next();
-                        String singleDomain = domainNode.get("domain").asText();
-                        matchingDomains.add(singleDomain);
-                    }
-
-                int matchesCount = matchingDomains.size();
-
-                TLDStats thisTldStats = new TLDStats(tld, matchesCount, matchingDomains, singleWord);
-
-                allTLDStats.add(thisTldStats);
-
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-
-                    return null;
-                }
-
+            if (!validTLDs.contains(new TldClass(inputTLD))) {
+                throw new UserException("The selected TLD does Not Exist",
+                                        "Use /listAll for a list of all TLDs");
             }
 
-            return ResponseEntity.ok(allTLDStats);
+            for (String singleWord : inputWords){
 
-        } catch (JsonMappingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+                try {
+                    int matchesCount = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/domains/search?domain=" + singleWord + "&zone=" + inputTLD).get("total").asInt();
 
-            return null;
+                    TldStats thisTldStats = new TldStats(inputTLD, matchesCount, singleWord);
+                    allTldStats.add(thisTldStats);
 
+                    } catch (NullPointerException e) {
+                        throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+                                                  "Please contact the server administrator");
+                }
+            }
+
+        } catch (NullPointerException e) {
+            throw new UserException("Invalid JSON filter",
+                                    "Use format {\"tld\":\"YOUR_TLD_HERE\",\"words\": [\"WORD_1\", \"WORD_2\", ..., \"WORD_N\"]}");
         } catch (JsonProcessingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-
-            return null;
+            throw new UserException("JSON parsing error",
+                                    "Refer to https://tools.ietf.org/html/rfc8259 for the standard format");
         }
 
+        Collections.sort(allTldStats);
+        Collections.reverse(allTldStats);
+
+        return ResponseEntity.ok(allTldStats);
     }
 
     @GetMapping("/info")

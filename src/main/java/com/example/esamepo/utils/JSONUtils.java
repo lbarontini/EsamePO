@@ -39,7 +39,7 @@ public class JSONUtils {
         return outputNode;
     }
 
-    public static <T> ArrayList<T> jsonArrayToArrayList(JsonNode inputNode, Class<T> model) {
+    public static <T> ArrayList<T> JsonNodeToArrayList(JsonNode inputNode, Class<T> model) {
 
         ArrayList<T> outputList = new ArrayList<>();
         ObjectMapper objectMapper = new ObjectMapper();
