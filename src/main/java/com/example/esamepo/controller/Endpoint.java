@@ -4,21 +4,26 @@ import com.example.esamepo.exception.ServerException;
 import com.example.esamepo.exception.UserException;
 import com.example.esamepo.model.StatsOutputModel;
 import com.example.esamepo.model.TldDescription;
+import com.example.esamepo.utils.JSONUtils;
+import com.example.esamepo.model.TldStats;
 import com.example.esamepo.model.TldClass;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 
 @RestController
 public class Endpoint {
@@ -26,107 +31,113 @@ public class Endpoint {
     @GetMapping("/listAll")
     public ResponseEntity<ArrayList<TldClass>> listAll() {
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        ArrayList<TldClass> tlds = new ArrayList<>();
+        JsonNode tldsNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/tld/").get("includes");
 
-        try {
-            URL url = new URL("https://api.domainsdb.info/v1/info/tld/");
-
-            JsonNode jsonNode = objectMapper.readTree(url).get("includes");
-
-            if (jsonNode == null) {
-                throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/tld",
-                        "Please contact the server administrator");
-            }
-
-            Iterator<JsonNode> ite = jsonNode.elements();
-
-            while (ite.hasNext()) {
-                JsonNode temp = ite.next();
-                tlds.add(objectMapper.treeToValue(temp, TldClass.class));
-            }
-
-        } catch (IOException | NoSuchElementException | ClassCastException e) {
-
+        if (tldsNode == null) {
             throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/tld",
-                    "Please contact the server administrator");
-            //todo improve exception handling
+                                      "Please contact the server administrator");
         }
+
+        ArrayList<TldClass> tlds = JSONUtils.JsonNodeToArrayList(tldsNode, TldClass.class);
 
         return ResponseEntity.ok(tlds);
     }
 
-
     @GetMapping("/rank")
-    public ResponseEntity<ArrayList<TldDescription>> rank(@RequestParam(name = "type") String type,
-                                                          @RequestParam(name = "tld", required = false) String tld) {
+    public ResponseEntity<ArrayList<TldDescription>> rank(@RequestParam(name = "count", required = false, defaultValue = "10") int count) {
 
-        if (type.equals("size")) {
+        ArrayList<TldClass> tlds = listAll().getBody();
+        ArrayList<TldDescription> rankedTLDs = new ArrayList<>();
 
-            ObjectMapper objectMapper = new ObjectMapper();
+        // This should iterate over all TLDs, but API is slow so will only fetch first
+        // {count} for the demo
+        for (int tldIndex = 0; tldIndex < count; tldIndex++) {
 
-            //Reusing other endpoint here
-            ArrayList<TldClass> tlds = listAll().getBody();
-            ArrayList<TldDescription> rankedTLDs = new ArrayList<>();
+            String thisTLDName = tlds.get(tldIndex).getName();
+            JsonNode arrayNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/stat/" + thisTLDName).get("statistics");
 
-            //This should iterate over all TLDs, but API is slow so will only fetch first 10 for the demo
-            for (int tldIndex = 0; tldIndex < 10; tldIndex++) {
-
-                try {
-                    assert tlds != null;
-                    String thisTLDName = tlds.get(tldIndex).getName();
-                    //URL url = new URL("https://api.domainsdb.info/v1/info/stat/" + thisTLDName);
-                    URL url = new URL("https://api.domainsdb.invalid");
-
-                    JsonNode arrayNode = objectMapper.readTree(url).get("statistics");
-
-                    //objectMapper.readTree(url) can return an unexpected JSON, which means the statistics array
-                    //may not be present
-                    if (arrayNode == null) {
-                        throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
-                                "Please contact the server administrator");
-                    }
-
-                    Iterator<JsonNode> ite = arrayNode.elements();
-                    JsonNode firstNode = ite.next();
-
-                    int thisTLDSize = firstNode.get("total").asInt();
-                    //Exceptions thrown by info(thisTLDName) are already handled automatically
-                    ArrayList<String> thisTLDDescription = info(thisTLDName).getBody().getDescription();
-
-                    TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize, thisTLDDescription);
-                    rankedTLDs.add(generatedObject);
-
-                } catch (IOException e) {
-                    throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
-                            "Please contact the server administrator");
-
-                } catch (NoSuchElementException | ClassCastException e) {
-
-                    //Seems like you can't distinguish between a connection error and nonexistent endpoint
-                    //on the upstream API using readtree(url): both throw IOException
-
-                    e.printStackTrace();
-                }
-
-
+            if (arrayNode == null) {
+                throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+                                          "Please contact the server administrator");
             }
 
-            Collections.sort(rankedTLDs);
-            //From largest to smallest TLD
-            Collections.reverse(rankedTLDs);
+            // Empty array if TLD never surveyed
+            JsonNode firstNode = arrayNode.get(0);
 
-            return ResponseEntity.ok(rankedTLDs);
+            if (firstNode == null) {
+                throw new ServerException("Missing historical data for TLD " + thisTLDName,
+                                          "Please contact the server administrator");
+            }
 
-        } else if (type.equals("keyword")) {
+            try {
+                // Returns null if field is missing
+                int thisTLDSize = firstNode.get("total").asInt();
 
-            //Handle ranking by keyword
+                // Exceptions thrown by info(thisTLDName) are already handled automatically
+                ArrayList<String> thisTLDDescription = info(thisTLDName).getBody().getDescription();
 
-            return null;
-        } else {
-            throw new UserException("Invalid ranking parameters",
-                    "Use /rank?type=size to rank by TLD size and /rank?type=keyword&tld={tld} to rank by most used keywords within a TLD");
+                TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize, thisTLDDescription);
+                rankedTLDs.add(generatedObject);
+
+            } catch (NullPointerException e) {
+                throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+                                          "Please contact the server administrator");
+            }
+
         }
+
+        Collections.sort(rankedTLDs);
+        // From largest to smallest TLD
+        Collections.reverse(rankedTLDs);
+
+        return ResponseEntity.ok(rankedTLDs);
+    }
+
+    @PostMapping(path = "/stats", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<ArrayList<TldStats>> stats(@RequestBody String filter) {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        ArrayList<TldStats> allTldStats = new ArrayList<>();
+
+        try {
+            JsonNode inputNode = objectMapper.readTree(filter);
+
+            String inputTLD = inputNode.get("tld").asText();
+            ArrayList<String> inputWords = JSONUtils.JsonNodeToArrayList(inputNode.get("words"), String.class);
+
+            ArrayList<TldClass> validTLDs = listAll().getBody();
+
+            if (!validTLDs.contains(new TldClass(inputTLD))) {
+                throw new UserException("The selected TLD does Not Exist",
+                                        "Use /listAll for a list of all TLDs");
+            }
+
+            for (String singleWord : inputWords){
+
+                try {
+                    int matchesCount = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/domains/search?domain=" + singleWord + "&zone=" + inputTLD).get("total").asInt();
+
+                    TldStats thisTldStats = new TldStats(inputTLD, matchesCount, singleWord);
+                    allTldStats.add(thisTldStats);
+
+                    } catch (NullPointerException e) {
+                        throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+                                                  "Please contact the server administrator");
+                }
+            }
+
+        } catch (NullPointerException e) {
+            throw new UserException("Invalid JSON filter",
+                                    "Use format {\"tld\":\"YOUR_TLD_HERE\",\"words\": [\"WORD_1\", \"WORD_2\", ..., \"WORD_N\"]}");
+        } catch (JsonProcessingException e) {
+            throw new UserException("JSON parsing error",
+                                    "Refer to https://tools.ietf.org/html/rfc8259 for the standard format");
+        }
+
+        Collections.sort(allTldStats);
+        Collections.reverse(allTldStats);
+
+        return ResponseEntity.ok(allTldStats);
     }
 
     @GetMapping("/info")
