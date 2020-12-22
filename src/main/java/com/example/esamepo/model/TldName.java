@@ -1,13 +1,13 @@
 package com.example.esamepo.model;
 
-public class TldClass {
+public class TldName {
 
     private String name;
 
-    public TldClass(String name) {
+    public TldName(String name) {
         this.name = name;
     }
-    public TldClass() {
+    public TldName() {
     }
     public String getName() {
         return name;
@@ -22,10 +22,9 @@ public class TldClass {
 
         if (this == other) {
             return true;
-        } else if ((other == null) || !(other instanceof TldClass)) {
+        } else if ((other == null) || !(other instanceof TldName)) {
             return false;
         }
-
-        return (this.name.equals(((TldClass) other).getName()));
+        return (this.name.equals(((TldName) other).getName()));
     }
 }

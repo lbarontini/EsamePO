@@ -15,18 +15,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 
 @RestController
 public class Endpoint {
 
     @GetMapping("/listAll")
-    public ResponseEntity<ArrayList<TldClass>> listAll() {
+    public ResponseEntity<ArrayList<TldName>> listAll() {
 
         JsonNode tldsNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/tld/").get("includes");
 
@@ -35,7 +31,7 @@ public class Endpoint {
                                       "Please contact the server administrator");
         }
 
-        ArrayList<TldClass> tlds = JSONUtils.JsonNodeToArrayList(tldsNode, TldClass.class);
+        ArrayList<TldName> tlds = JSONUtils.JsonNodeToArrayList(tldsNode, TldName.class);
 
         return ResponseEntity.ok(tlds);
     }
@@ -43,7 +39,7 @@ public class Endpoint {
     @GetMapping("/rank")
     public ResponseEntity<ArrayList<TldDescription>> rank(@RequestParam(name = "count", required = false, defaultValue = "10") int count) {
 
-        ArrayList<TldClass> tlds = listAll().getBody();
+        ArrayList<TldName> tlds = listAll().getBody();
         ArrayList<TldDescription> rankedTLDs = new ArrayList<>();
 
         // This should iterate over all TLDs, but API is slow so will only fetch first
@@ -91,10 +87,10 @@ public class Endpoint {
     }
 
     @PostMapping(path = "/stats", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<ArrayList<TldStats>> stats(@RequestBody String filter) {
+    public ResponseEntity<ArrayList<WordUsage>> wordStats(@RequestBody String filter) {
 
         ObjectMapper objectMapper = new ObjectMapper();
-        ArrayList<TldStats> allTldStats = new ArrayList<>();
+        ArrayList<WordUsage> allTldStats = new ArrayList<>();
 
         try {
             JsonNode inputNode = objectMapper.readTree(filter);
@@ -102,9 +98,9 @@ public class Endpoint {
             String inputTLD = inputNode.get("tld").asText();
             ArrayList<String> inputWords = JSONUtils.JsonNodeToArrayList(inputNode.get("words"), String.class);
 
-            ArrayList<TldClass> validTLDs = listAll().getBody();
+            ArrayList<TldName> validTLDs = listAll().getBody();
 
-            if (!validTLDs.contains(new TldClass(inputTLD))) {
+            if (!validTLDs.contains(new TldName(inputTLD))) {
                 throw new UserException("The selected TLD does Not Exist",
                                         "Use /listAll for a list of all TLDs");
             }
@@ -114,8 +110,8 @@ public class Endpoint {
                 try {
                     int matchesCount = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/domains/search?domain=" + singleWord + "&zone=" + inputTLD).get("total").asInt();
 
-                    TldStats thisTldStats = new TldStats(inputTLD, matchesCount, singleWord);
-                    allTldStats.add(thisTldStats);
+                    WordUsage thisWordUsage = new WordUsage(inputTLD, matchesCount, singleWord);
+                    allTldStats.add(thisWordUsage);
 
                     } catch (NullPointerException e) {
                         throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
@@ -138,11 +134,11 @@ public class Endpoint {
     }
 
     @GetMapping("/info")
-    public ResponseEntity<TldInputModel> info(@RequestParam(name = "tld", defaultValue = "null") String tld) {
+    public ResponseEntity<TldDescription> info(@RequestParam(name = "tld", defaultValue = "null") String tld) {
 
-        ArrayList<TldClass> tlds = listAll().getBody();
+        ArrayList<TldName> tlds = listAll().getBody();
         assert tlds != null;
-        if (tlds.contains(new TldClass(tld))) {
+        if (tlds.contains(new TldName(tld))) {
             JsonNode jsonNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/tld/" + tld);
             //jsonNode can be null if the schema of the api changes
             if (jsonNode == null)
@@ -150,7 +146,7 @@ public class Endpoint {
                         "please contact the server administrator");
             ObjectMapper objectMapper = new ObjectMapper();
             try {
-                return ResponseEntity.ok(objectMapper.treeToValue(jsonNode, TldInputModel.class));
+                return ResponseEntity.ok(objectMapper.treeToValue(jsonNode, TldDescription.class));
             } catch (JsonProcessingException e) {
                 //also this exeption can be launched if the api schema changes
                 throw new ServerException("the api schema is changed in: https://api.domainsdb.info/v1/info/tld",
@@ -161,11 +157,10 @@ public class Endpoint {
                     "use /listAll for a list of all tlds");
     }
 
-    @GetMapping("/statistic")
-    public ResponseEntity<StatsOutputModel> statistic() {
+    @GetMapping("/stats")
+    public ResponseEntity<TldStats> statistic(@RequestParam(name = "count", required = false, defaultValue = "10") int count) {
 
-        ArrayList<TldClass> tlds = listAll().getBody();
-        ArrayList<TldDescription> tldList = rank(10).getBody();
+        ArrayList<TldDescription> tldList = rank(count).getBody();
         assert tldList != null;
         TldDescription maxTld = Collections.max(tldList);
         TldDescription mintld = Collections.min(tldList);
@@ -174,6 +169,6 @@ public class Endpoint {
             avg+=td.getDomainsCount();
         }
         avg=avg/tldList.size();
-        return ResponseEntity.ok(new StatsOutputModel(mintld,maxTld,avg));
+        return ResponseEntity.ok(new TldStats(mintld,maxTld,avg));
     }
 }

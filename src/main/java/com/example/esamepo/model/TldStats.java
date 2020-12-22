@@ -1,33 +1,39 @@
 package com.example.esamepo.model;
 
-public class TldStats extends TldClass implements Comparable<TldStats> {
+public class TldStats {
+    TldDescription min, max;
+    float average;
 
-    private int matchesCount;
-    private String matchingWord;
-
-    public int compareTo(TldStats other) {
-        return Integer.compare(this.matchesCount, other.getMatchesCount());
+    public TldStats() {
     }
 
-    public TldStats(String name, int matchesCount, String matchingWord) {
-        super(name);
-        this.matchesCount = matchesCount;
-        this.matchingWord = matchingWord;
+    public TldStats(TldDescription min, TldDescription max, float average) {
+        this.min = min;
+        this.max = max;
+        this.average = average;
     }
 
-    public int getMatchesCount() {
-        return matchesCount;
+    public TldDescription getMin() {
+        return min;
     }
 
-    public void setMatchesCount(int matchesCount) {
-        this.matchesCount = matchesCount;
+    public void setMin(TldDescription min) {
+        this.min = min;
     }
 
-    public String getMatchingWord() {
-        return matchingWord;
+    public TldDescription getMax() {
+        return max;
     }
 
-    public void setMatchingWord(String matchingWord) {
-        this.matchingWord = matchingWord;
+    public void setMax(TldDescription max) {
+        this.max = max;
+    }
+
+    public float getAverage() {
+        return average;
+    }
+
+    public void setAverage(float average) {
+        this.average = average;
     }
 }
