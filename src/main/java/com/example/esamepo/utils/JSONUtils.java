@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.example.esamepo.exception.ServerException;
+import com.example.esamepo.exception.UserException;
+import com.example.esamepo.model.WordSelection;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,5 +58,20 @@ public class JSONUtils {
         }
 
         return outputList;
+    }
+
+    public static WordSelection RawInputToWordSelection(String rawInput) {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            JsonNode inputNode = objectMapper.readTree(rawInput);
+            //Deserialized data sent via HTTP POST request into WordSelection class
+            return objectMapper.treeToValue(inputNode, WordSelection.class);
+        } catch (JsonProcessingException e) {
+            throw new UserException("JSON parsing error",
+                                    "Refer to https://tools.ietf.org/html/rfc8259 for the standard format");
+        }
+
     }
 }

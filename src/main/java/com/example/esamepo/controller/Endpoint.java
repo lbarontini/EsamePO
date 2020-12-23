@@ -87,50 +87,39 @@ public class Endpoint {
     }
 
     @PostMapping(path = "/stats", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<ArrayList<WordUsage>> wordStats(@RequestBody String filter) {
+    public ResponseEntity<ArrayList<WordUsage>> wordStats(@RequestBody String data) {
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        ArrayList<WordUsage> allTldStats = new ArrayList<>();
+        ArrayList<WordUsage> allWordUsage = new ArrayList<>();
 
-        try {
-            JsonNode inputNode = objectMapper.readTree(filter);
+        WordSelection inputSelection = JSONUtils.RawInputToWordSelection(data);
+        String inputTLD = inputSelection.getTld();
+        ArrayList<String> inputWords = inputSelection.getWords();
 
-            String inputTLD = inputNode.get("tld").asText();
-            ArrayList<String> inputWords = JSONUtils.JsonNodeToArrayList(inputNode.get("words"), String.class);
+        ArrayList<TldName> validTLDs = listAll().getBody();
 
-            ArrayList<TldName> validTLDs = listAll().getBody();
-
-            if (!validTLDs.contains(new TldName(inputTLD))) {
-                throw new UserException("The selected TLD does Not Exist",
-                                        "Use /listAll for a list of all TLDs");
-            }
-
-            for (String singleWord : inputWords){
-
-                try {
-                    int matchesCount = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/domains/search?domain=" + singleWord + "&zone=" + inputTLD).get("total").asInt();
-
-                    WordUsage thisWordUsage = new WordUsage(inputTLD, matchesCount, singleWord);
-                    allTldStats.add(thisWordUsage);
-
-                    } catch (NullPointerException e) {
-                        throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
-                                                  "Please contact the server administrator");
-                }
-            }
-
-        } catch (NullPointerException e) {
-            throw new UserException("Invalid JSON filter",
-                                    "Use format {\"tld\":\"YOUR_TLD_HERE\",\"words\": [\"WORD_1\", \"WORD_2\", ..., \"WORD_N\"]}");
-        } catch (JsonProcessingException e) {
-            throw new UserException("JSON parsing error",
-                                    "Refer to https://tools.ietf.org/html/rfc8259 for the standard format");
+        if (!validTLDs.contains(new TldName(inputTLD))) {
+            throw new UserException("The selected TLD does Not Exist",
+                                    "Use /listAll for a list of all TLDs");
         }
 
-        Collections.sort(allTldStats);
-        Collections.reverse(allTldStats);
+        for (String singleWord : inputWords){
 
-        return ResponseEntity.ok(allTldStats);
+            try {
+                int matchesCount = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/domains/search?domain=" + singleWord + "&zone=" + inputTLD).get("total").asInt();
+
+                WordUsage thisWordUsage = new WordUsage(inputTLD, matchesCount, singleWord);
+                allWordUsage.add(thisWordUsage);
+
+                } catch (NullPointerException e) {
+                    throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
+                                              "Please contact the server administrator");
+            }
+        }
+
+        Collections.sort(allWordUsage);
+        Collections.reverse(allWordUsage);
+
+        return ResponseEntity.ok(allWordUsage);
     }
 
     @GetMapping("/info")
