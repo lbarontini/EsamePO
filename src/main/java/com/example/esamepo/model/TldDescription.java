@@ -1,11 +1,14 @@
 package com.example.esamepo.model;
 
+import com.example.esamepo.utils.TldDescriptionSerializer;
 import com.example.esamepo.utils.TldDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.ArrayList;
 
 @JsonDeserialize(using = TldDeserializer.class)
+@JsonSerialize(using = TldDescriptionSerializer.class)
 public class TldDescription extends TldName implements Comparable<TldDescription> {
 
     private int domainsCount;
@@ -17,10 +20,12 @@ public class TldDescription extends TldName implements Comparable<TldDescription
         return Integer.compare(this.domainsCount, other.getDomainsCount());
     }
 
+    //domainscount=-1 for signaling the deserializer that domainscount must not be printed;
     public TldDescription(String name,ArrayList<String> includes, ArrayList<String> description) {
         super(name);
         this.includes=includes;
         this.description = description;
+        this.domainsCount=-1;
     }
     public TldDescription(String name, int domainsCount, ArrayList<String> description) {
         super(name);

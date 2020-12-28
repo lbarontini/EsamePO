@@ -34,6 +34,5 @@ public class WordSelectionDeserializer extends StdDeserializer<WordSelection> {
             throw new UserException("Invalid JSON format",
                                     "Use format {\"tld\":\"YOUR_TLD_HERE\",\"words\": [\"WORD_1\", \"WORD_2\", ..., \"WORD_N\"]}");
         }
-   
     }
 }
