@@ -26,7 +26,9 @@ public class Endpoint {
 
         JsonNode tldsNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/tld/").get("includes");
 
-        if (tldsNode == null) {
+        //tldsNode is null if "includes" field is missing, whereas tldsNode.isNull()
+        //is true if "includes" is set to null
+        if (tldsNode == null || tldsNode.isNull()) {
             throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/tld",
                                       "Please contact the server administrator");
         }
@@ -49,7 +51,7 @@ public class Endpoint {
             String thisTLDName = tlds.get(tldIndex).getName();
             JsonNode arrayNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/stat/" + thisTLDName).get("statistics");
 
-            if (arrayNode == null) {
+            if (arrayNode == null || arrayNode.isNull()) {
                 throw new ServerException("The API schema has changed: https://api.domainsdb.info/v1/info/stat/",
                                           "Please contact the server administrator");
             }
@@ -57,7 +59,7 @@ public class Endpoint {
             // Empty array if TLD never surveyed
             JsonNode firstNode = arrayNode.get(0);
 
-            if (firstNode == null) {
+            if (firstNode == null || firstNode.isNull()) {
                 throw new ServerException("Missing historical data for TLD " + thisTLDName,
                                           "Please contact the server administrator");
             }
@@ -130,7 +132,7 @@ public class Endpoint {
         if (tlds.contains(new TldName(tld))) {
             JsonNode jsonNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/tld/" + tld);
             //jsonNode can be null if the schema of the api changes
-            if (jsonNode == null)
+            if (jsonNode == null || jsonNode.isNull())
                 throw new ServerException("the api schema is changed in: https://api.domainsdb.info/v1/info/tld",
                         "please contact the server administrator");
             ObjectMapper objectMapper = new ObjectMapper();
