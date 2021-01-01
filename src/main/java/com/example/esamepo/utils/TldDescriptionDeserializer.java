@@ -11,13 +11,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 //i wanted to test if we can make cleaner code using custom deserializer
-public class TldDeserializer extends StdDeserializer<TldDescription> {
+public class TldDescriptionDeserializer extends StdDeserializer<TldDescription> {
 
-    public TldDeserializer() {
+    private static final long serialVersionUID = 1L;
+
+    public TldDescriptionDeserializer() {
         this(null);
     }
 
-    protected TldDeserializer(Class<?> vc) {
+    protected TldDescriptionDeserializer(Class<?> vc) {
         super(vc);
     }
 

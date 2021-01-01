@@ -1,13 +1,13 @@
 package com.example.esamepo.model;
 
 import com.example.esamepo.utils.TldDescriptionSerializer;
-import com.example.esamepo.utils.TldDeserializer;
+import com.example.esamepo.utils.TldDescriptionDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.ArrayList;
 
-@JsonDeserialize(using = TldDeserializer.class)
+@JsonDeserialize(using = TldDescriptionDeserializer.class)
 @JsonSerialize(using = TldDescriptionSerializer.class)
 public class TldDescription extends TldName implements Comparable<TldDescription> {
 
