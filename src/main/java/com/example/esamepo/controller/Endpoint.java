@@ -24,7 +24,10 @@ public class Endpoint {
     @GetMapping("/listAll")
     public ResponseEntity<ArrayList<TldName>> listAll() {
 
-        JsonNode tldsNode = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/info/tld/").get("includes");
+        //Workaround for (hopefully temporary) downtime of the https://api.domainsdb.info/v1/info/tld/ API
+        //cctlds.json contains 100 randomly selected top-level domain, that have been checked to be available
+        //in Domains-Index database.
+        JsonNode tldsNode = JSONUtils.UrlToJsonNode("file:./tlds.json").get("includes");
 
         //tldsNode is null if "includes" field is missing, whereas tldsNode.isNull()
         //is true if "includes" is set to null
