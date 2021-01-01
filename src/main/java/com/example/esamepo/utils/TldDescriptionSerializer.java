@@ -9,7 +9,9 @@ import java.io.IOException;
 
 public class TldDescriptionSerializer  extends StdSerializer<TldDescription> {
 
-        public TldDescriptionSerializer() {
+    private static final long serialVersionUID = 1L;
+
+    public TldDescriptionSerializer() {
             this(null);
         }
 
@@ -21,12 +23,27 @@ public class TldDescriptionSerializer  extends StdSerializer<TldDescription> {
     public void serialize(TldDescription tldDescription, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
 
         jsonGenerator.writeStartObject();
-        jsonGenerator.writeStringField("Name", tldDescription.getName());
-        jsonGenerator.writeStringField("includes", tldDescription.getIncludes().toString());
-        jsonGenerator.writeStringField("descriptions", tldDescription.getDescription().toString());
-        if (tldDescription.getDomainsCount()!=-1)
-            jsonGenerator.writeNumberField("domainscount", tldDescription.getDomainsCount());
-        jsonGenerator.writeEndObject();
 
+        jsonGenerator.writeStringField("name", tldDescription.getName());
+
+        if (tldDescription.getIncludes() != null) {
+            jsonGenerator.writeArrayFieldStart("includes");
+            for (String s : tldDescription.getIncludes()){
+                jsonGenerator.writeString(s);
+            }
+            jsonGenerator.writeEndArray();
+        }
+
+        if (tldDescription.getDomainsCount() != -1) {
+            jsonGenerator.writeNumberField("domainsCount", tldDescription.getDomainsCount());
+        }
+
+        jsonGenerator.writeArrayFieldStart("description");
+        for (String s : tldDescription.getDescription()){
+            jsonGenerator.writeString(s);
+        }
+        jsonGenerator.writeEndArray();
+
+        jsonGenerator.writeEndObject();
     }
 }

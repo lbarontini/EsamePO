@@ -20,15 +20,18 @@ public class TldDescription extends TldName implements Comparable<TldDescription
         return Integer.compare(this.domainsCount, other.getDomainsCount());
     }
 
-    //domainscount=-1 for signaling the deserializer that domainscount must not be printed;
+    //domainsCount= -1 for signaling the serializer that domainsCount must not be printed;
     public TldDescription(String name,ArrayList<String> includes, ArrayList<String> description) {
         super(name);
-        this.includes=includes;
+        this.includes = includes;
+        this.domainsCount = -1;
         this.description = description;
-        this.domainsCount=-1;
     }
+
+    //includes=null for signaling the serializer that includes must not be printed;
     public TldDescription(String name, int domainsCount, ArrayList<String> description) {
         super(name);
+        this.includes = null;
         this.domainsCount = domainsCount;
         this.description = description;
     }
