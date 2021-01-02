@@ -40,7 +40,6 @@ class EsamepoApplicationTests {
 	@Test
 	public void statsAPI() throws Exception
 	{
-		//todo implement serialize for tldstats because as is this test fails
 		mvc.perform( MockMvcRequestBuilders
 				.get("/stats")
 				.accept(MediaType.APPLICATION_JSON))
@@ -59,9 +58,9 @@ class EsamepoApplicationTests {
 				.accept(MediaType.APPLICATION_JSON))
 				.andDo(print())
 				.andExpect(status().isOk())
-				.andExpect(MockMvcResultMatchers.jsonPath("$.Name").exists())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.name").exists())
 				.andExpect(MockMvcResultMatchers.jsonPath("$.includes").exists())
-				.andExpect(MockMvcResultMatchers.jsonPath("$.descriptions").exists());
+				.andExpect(MockMvcResultMatchers.jsonPath("$.description").exists());
 	}
 
 }
