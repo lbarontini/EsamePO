@@ -2,8 +2,11 @@ package com.example.esamepo.controller;
 
 import com.example.esamepo.exception.ServerException;
 import com.example.esamepo.exception.UserException;
-
-import com.example.esamepo.model.*;
+import com.example.esamepo.model.TldDescription;
+import com.example.esamepo.model.TldName;
+import com.example.esamepo.model.TldStats;
+import com.example.esamepo.model.WordSelection;
+import com.example.esamepo.model.WordUsage;
 import com.example.esamepo.utils.JSONUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -99,6 +102,7 @@ public class Endpoint {
 
         WordSelection inputSelection = JSONUtils.RawInputToWordSelection(data);
         String inputTLD = inputSelection.getTld();
+
         ArrayList<String> inputWords = inputSelection.getWords();
 
         ArrayList<TldName> validTLDs = listAll().getBody();
