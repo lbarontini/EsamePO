@@ -29,7 +29,7 @@ public class Endpoint {
     public ResponseEntity<ArrayList<TldName>> listAll() {
 
         //Workaround for (hopefully temporary) downtime of the https://api.domainsdb.info/v1/info/tld/ API
-        //cctlds.json contains 100 randomly selected top-level domain, that have been checked to be available
+        //tlds.json contains 100 randomly selected top-level domain, that have been checked to be available
         //in Domains-Index database.
         JsonNode tldsNode = JSONUtils.UrlToJsonNode("file:./tlds.json").get("includes");
 
@@ -47,6 +47,11 @@ public class Endpoint {
 
     @GetMapping("/rank")
     public ResponseEntity<ArrayList<TldDescription>> rank(@RequestParam(name = "count", required = false, defaultValue = "10") int count) {
+
+        if (count <= 0){
+            throw new UserException(Integer.toString(count) + " is not a valid number",
+                                    "Provide a positive integer as a count");
+        }
 
         ArrayList<TldName> tlds = listAll().getBody();
         ArrayList<TldDescription> rankedTLDs = new ArrayList<>();
@@ -158,6 +163,11 @@ public class Endpoint {
 
     @GetMapping("/stats")
     public ResponseEntity<TldStats> statistic(@RequestParam(name = "count", required = false, defaultValue = "10") int count) {
+
+        if (count <= 0){
+            throw new UserException(Integer.toString(count) + " is not a valid number",
+                                    "Provide a positive integer as a count");
+        }
 
         ArrayList<TldDescription> tldList = rank(count).getBody();
         assert tldList != null;

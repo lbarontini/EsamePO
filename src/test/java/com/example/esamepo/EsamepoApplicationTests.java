@@ -37,16 +37,31 @@ class EsamepoApplicationTests {
 	}
 
 	@Test
-	public void rankAPI() throws Exception
+	public void rankAPIExplicitCount() throws Exception
 	{
 		mvc.perform( MockMvcRequestBuilders
-				.get("/stats?count=4")
+				.get("/rank?count=4")
 				.accept(MediaType.APPLICATION_JSON))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(MockMvcResultMatchers.jsonPath("$.[*].name").exists())
 				.andExpect(MockMvcResultMatchers.jsonPath("$.[*].domainsCount").exists())
-				.andExpect(MockMvcResultMatchers.jsonPath("$.[*].description").exists());
+				.andExpect(MockMvcResultMatchers.jsonPath("$.[*].description").exists())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.length()").value("4"));
+	}
+
+	@Test
+	public void rankAPIDefaultCount() throws Exception
+	{
+		mvc.perform( MockMvcRequestBuilders
+				.get("/rank")
+				.accept(MediaType.APPLICATION_JSON))
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.[*].name").exists())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.[*].domainsCount").exists())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.[*].description").exists())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.length()").value("10"));
 	}
 
 	@Test
