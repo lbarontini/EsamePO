@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(Endpoint.class)
-class EsamepoExceptionTest {
+class EsamepoExceptionTests {
 
 	@Test
 	void contextLoads() {
