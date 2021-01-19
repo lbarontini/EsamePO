@@ -1,5 +1,9 @@
 package com.example.esamepo.exception;
 
+/**
+ * class for handling user exception,
+ * launched when the user does not provide correct input
+ */
 public class UserException extends RuntimeException{
 
     private static final long serialVersionUID = 1L;

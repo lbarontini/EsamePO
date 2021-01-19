@@ -7,16 +7,26 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-//this is the controlleradvice for handling custom springboot exceptions
+
+/**
+ * class for handling response to an exception
+ */
 @ControllerAdvice
 public class ExceptionInterceptor extends ResponseEntityExceptionHandler {
 
+    /**
+     * method for handling response to a UserException,
+     * @param ex te UserException to handle
+     * @return te correct http Status and json response
+     * @see ServerException
+     */
     @ExceptionHandler(UserException.class)
     public final ResponseEntity<Object> handleBadRequestException(UserException ex) {
         MyExceptionSchema exceptionResponse = new MyExceptionSchema(ex.getMessage(), ex.getDetails(), ex.getTodo());
         return new ResponseEntity<>(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
 
+    //todo can this be eliminated???
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public final ResponseEntity<Object> handleInvalidParameterValue(MethodArgumentTypeMismatchException originalException) {
         String offendingValue = originalException.getValue().toString();
@@ -25,6 +35,12 @@ public class ExceptionInterceptor extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * method for handling response to a ServerException,
+     * @param ex te ServerException to handle
+     * @return te correct http Status and json response
+     * @see UserException
+     */
     @ExceptionHandler(ServerException.class)
     public final ResponseEntity<Object> handleConnectivityException(ServerException ex) {
         MyExceptionSchema exceptionResponse = new MyExceptionSchema(ex.getMessage(), ex.getDetails(), ex.getTodo());

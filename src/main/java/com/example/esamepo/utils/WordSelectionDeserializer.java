@@ -10,6 +10,10 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * deserializer for the class Word selection
+ * @see com.fasterxml.jackson.databind.deser.std.StdDeserializer
+ */
 public class WordSelectionDeserializer extends StdDeserializer<WordSelection> {
 
     private static final long serialVersionUID = 1L;

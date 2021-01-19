@@ -1,5 +1,10 @@
 package com.example.esamepo.exception;
-//this is the schema to use for custom springboot exceptions
+
+
+/**
+ * class for handling server exception,
+ * launched when the api on https://api.domainsdb.info/v1/ does notwork properly
+ */
 public class ServerException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;

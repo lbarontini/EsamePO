@@ -1,5 +1,8 @@
 package com.example.esamepo.model;
 
+/**
+ * model class for json output of the /stats route
+ */
 public class TldStats {
     TldDescription min, max;
     float average;

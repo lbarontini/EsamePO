@@ -7,6 +7,10 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import java.io.IOException;
 
+/**
+ * serializer for the class TldDescription
+ * it generate a json with the field that are non null (different from -1 in case of DomainsCount)
+ */
 public class TldDescriptionSerializer  extends StdSerializer<TldDescription> {
 
     private static final long serialVersionUID = 1L;

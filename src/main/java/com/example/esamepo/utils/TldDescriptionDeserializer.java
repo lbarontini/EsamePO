@@ -10,7 +10,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-//i wanted to test if we can make cleaner code using custom deserializer
+
+/**
+ * deserializer for the class TldDescription
+ * @see com.fasterxml.jackson.databind.deser.std.StdDeserializer
+ */
 public class TldDescriptionDeserializer extends StdDeserializer<TldDescription> {
 
     private static final long serialVersionUID = 1L;

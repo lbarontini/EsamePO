@@ -1,8 +1,24 @@
 package com.example.esamepo.exception;
 
+
+/**
+ * schema class for generating exception json output
+ */
 public class MyExceptionSchema {
+
+    /**
+     * main exception message
+     */
         private String message;
+
+    /**
+     * details of the exception
+     */
         private String details;
+
+    /**
+     * action to make for resolving the error
+     */
         private String todo;
 
 
