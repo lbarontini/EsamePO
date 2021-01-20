@@ -61,8 +61,7 @@ public class Endpoint {
      * route that show a list of tlds, ordered by the number of domains contained, as a response of a get request
      *
      * @param count number of tlds to fetch, 10 by default, because the api is slow is better to maintain this number small
-     //Todo is sub-domains the correct name?
-     * @return return a json array of TldDescription, containing the name of the tld and the count of the sub-domains, ordered by this count
+     * @return return a json array of TldDescription, showing the name of the tld and the count of the domains contained, ordered by this count
      * @throws ServerException exception launched if something went wrong with https://api.domainsdb.info/v1/info/stat/
      * @throws UserException exception launched if the user input is not a positive integer
      */
@@ -105,6 +104,7 @@ public class Endpoint {
                 ArrayList<String> thisTLDDescription = info(thisTLDName).getBody().getDescription();
 
                 TldDescription generatedObject = new TldDescription(thisTLDName, thisTLDSize, thisTLDDescription);
+
                 rankedTLDs.add(generatedObject);
 
             } catch (NullPointerException e) {
@@ -124,7 +124,7 @@ public class Endpoint {
 
     /**
      * route that show the number of times that the words, passed as post request body,
-     * are in the sub domains name of a specified tld
+     * are part of the domain names in a specified tld
      *
      * @param data json formatted string that contains the Tld name and the words to search.
      *        json body schema:
@@ -155,7 +155,6 @@ public class Endpoint {
         }
 
         for (String singleWord : inputWords){
-
             try {
                 int matchesCount = JSONUtils.UrlToJsonNode("https://api.domainsdb.info/v1/domains/search?domain=" + singleWord + "&zone=" + inputTLD).get("total").asInt();
 
@@ -179,7 +178,7 @@ public class Endpoint {
      * route that show relevant information about a tld from a get request
      *
      * @param tld the name of the tld
-     * @return return a json serialized TldDescription with the tld name, the count of the sub domain and the description.
+     * @return return a json serialized TldDescription with the tld name, the count of the domains and the description.
      * @throws ServerException exception launched if something went wrong with https://api.domainsdb.info/v1/info/tld/
      * @throws UserException exception launched if the user put an invalid tld name as input
      */
@@ -209,10 +208,10 @@ public class Endpoint {
 
 
     /**
-     * route that show statistics about sub domains contained in the tlds.
+     * route that show statistics about domains contained in the tlds.
      * @param count number of tlds to fetch, 10 by default, because the api is slow is better to maintain this number small
-     * @return json serialization of TldStats containing the tld with the minimum number of sub-domain,
-     *      the tld with the maximum number of sub domains and the average of domains contained in the fetched tlds
+     * @return json serialization of TldStats containing the tld with the minimum number of domains,
+     *      the tld with the maximum number of domains and the average of domains contained in the fetched tld
      * @throws UserException exception launched if the user input is not a positive integer
      */
     @GetMapping("/stats")

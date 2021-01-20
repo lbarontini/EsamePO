@@ -2,6 +2,7 @@ package com.example.esamepo.model;
 
 /**
  * model class for json output of the /stats route
+ * @see com.example.esamepo.controller.Endpoint
  */
 public class TldStats {
     TldDescription min, max;

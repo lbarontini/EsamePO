@@ -17,7 +17,6 @@ import java.util.ArrayList;
 @JsonSerialize(using = TldDescriptionSerializer.class)
 public class TldDescription extends TldName implements Comparable<TldDescription> {
 
-
     /**
      * attribute that represent the number of domains included in the tld
      * must be set to -1 for signaling the serializer that should not be printed;
@@ -136,13 +135,12 @@ public class TldDescription extends TldName implements Comparable<TldDescription
     }
 
     /**
-     * override of the compareTo method for comparing TldDescription objects by domainsCount
+     * implementation of the compareTo method of the Comparable interface for comparing TldDescription objects by domainsCount
      * @param other the object to compare with
      * @return 0 if the domainsCount is equal between the two TldDescription objects,
      *      a value > 0 if the other domainsCount is bigger,
      *      a value < 0 if the other domainsCount is smaller
      */
-    //todo check if other is an instance of TldDescription?
     @Override
     public int compareTo(TldDescription other) {
         return Integer.compare(this.domainsCount, other.getDomainsCount());

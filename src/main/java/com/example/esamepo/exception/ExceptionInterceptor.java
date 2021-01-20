@@ -26,7 +26,11 @@ public class ExceptionInterceptor extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
 
-    //todo can this be eliminated???
+    /**
+     * method for handling response to a MethodArgumentTypeMismatchException
+     * @param originalException the MethodArgumentTypeMismatchException to handle
+     * @return te correct http Status and json response
+     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public final ResponseEntity<Object> handleInvalidParameterValue(MethodArgumentTypeMismatchException originalException) {
         String offendingValue = originalException.getValue().toString();
