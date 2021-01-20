@@ -9,27 +9,35 @@ public class MyExceptionSchema {
     /**
      * main exception message
      */
-        private String message;
+    private String message;
 
     /**
      * details of the exception
      */
-        private String details;
+    private String details;
 
     /**
      * action to make for resolving the error
      */
-        private String todo;
+    private String todo;
 
 
-        protected MyExceptionSchema() {}
+    /**
+     * constructor needed by SpringBoot
+     */
+    protected MyExceptionSchema() {}
 
-        public MyExceptionSchema(
-                String message, String details, String todo) {
-            this.message = message;
-            this.details = details;
-            this.todo = todo;
-        }
+    /**
+     * default constructor
+     * @param message main exception message
+     * @param details details of the exception
+     * @param todo action to make for resolving the error
+     */
+    public MyExceptionSchema(String message, String details, String todo) {
+        this.message = message;
+        this.details = details;
+        this.todo = todo;
+    }
 
     public String getMessage() {
         return message;

@@ -8,9 +8,6 @@ public class TldStats {
     TldDescription min, max;
     float average;
 
-    public TldStats() {
-    }
-
     public TldStats(TldDescription min, TldDescription max, float average) {
         this.min = min;
         this.max = max;

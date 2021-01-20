@@ -17,16 +17,29 @@ import java.util.Iterator;
  */
 public class TldDescriptionDeserializer extends StdDeserializer<TldDescription> {
 
+    /**
+     * needed for the serialization of StdDeserializer
+     */
     private static final long serialVersionUID = 1L;
 
+    /**
+     * constructor needed by jackson
+     */
     public TldDescriptionDeserializer() {
         this(null);
     }
 
-    protected TldDescriptionDeserializer(Class<?> vc) {
+    /**
+     * constructor needed by jackson
+     */
+    protected TldDescriptionDeserializer(Class<TldDescription> vc) {
         super(vc);
     }
 
+    /**
+     * override of the abstract method for handling deserialization from json to TldDescription
+     * @throws IOException in case of deserialization errors
+     */
     @Override
     public TldDescription deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         JsonNode node = jsonParser.getCodec().readTree(jsonParser);

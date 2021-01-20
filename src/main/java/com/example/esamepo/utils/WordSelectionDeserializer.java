@@ -16,16 +16,29 @@ import java.util.ArrayList;
  */
 public class WordSelectionDeserializer extends StdDeserializer<WordSelection> {
 
+    /**
+     * needed for the serialization of StdDeserializer
+     */
     private static final long serialVersionUID = 1L;
 
+    /**
+     * constructor needed by jackson
+     */
     public WordSelectionDeserializer() {
         this(null);
     }
 
-    protected WordSelectionDeserializer(Class<?> vc) {
+    /**
+     * constructor needed by jackson
+     */
+    protected WordSelectionDeserializer(Class<WordSelection> vc) {
         super(vc);
     }
 
+    /**
+     * override of the abstract method for handling deserialization from json to WordSelection
+     * @throws IOException in case of deserialization errors
+     */
     @Override
     public WordSelection deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 

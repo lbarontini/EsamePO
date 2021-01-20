@@ -13,16 +13,30 @@ import java.io.IOException;
  */
 public class TldDescriptionSerializer  extends StdSerializer<TldDescription> {
 
+    /**
+     * needed for the serialization of StdSerializer
+     */
     private static final long serialVersionUID = 1L;
 
+    /**
+     * constructor needed by jackson
+     */
     public TldDescriptionSerializer() {
-            this(null);
-        }
+        this(null);
+    }
 
-        public TldDescriptionSerializer(Class<TldDescription> t) {
-            super(t);
-        }
+    /**
+     * constructor needed by jackson
+     */
+    public TldDescriptionSerializer(Class<TldDescription> t) {
+        super(t);
+    }
 
+    /**
+     * override of the abstract method for handling serialization from TldDescription to json
+     *
+     * @throws IOException in case of serialization errors
+     */
     @Override
     public void serialize(TldDescription tldDescription, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
 

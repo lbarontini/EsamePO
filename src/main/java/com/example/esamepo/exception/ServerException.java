@@ -7,22 +7,37 @@ package com.example.esamepo.exception;
  */
 public class ServerException extends RuntimeException {
 
+    /**
+     * needed for the serialization of RuntimeException
+     */
     private static final long serialVersionUID = 1L;
+
+    /**
+     * main exception message, always set to "ServerException"
+     */
     private static final String message= "ServerException";
+
+    /**
+     * details of the exception
+     */
     private String details;
+
+    /**
+     * action to make for resolving the error
+     */
     private String todo;
 
-    public ServerException() {
-        super();
-    }
-
+    /**
+     * constructor
+     * @param details details of the exception
+     * @param todo action to make for resolving the error
+     */
     public ServerException( String details, String todo) {
         super.printStackTrace();
         this.details = details;
         this.todo = todo;
     }
 
-    @Override
     public String getMessage() {
         return message;
     }
