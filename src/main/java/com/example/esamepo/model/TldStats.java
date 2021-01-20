@@ -5,8 +5,8 @@ package com.example.esamepo.model;
  * @see com.example.esamepo.controller.Endpoint
  */
 public class TldStats {
-    TldDescription min, max;
-    float average;
+    private TldDescription min, max;
+    private float average;
 
     public TldStats(TldDescription min, TldDescription max, float average) {
         this.min = min;
