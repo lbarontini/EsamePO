@@ -12,6 +12,8 @@ Link alle sezioni:
 
 - [Test](#classi-di-test)
 
+- [Documentazione](https://lbarontini.github.io/EsamePO)
+
 ## Funzionalità
 
 In conformità allo stile REST, la nostra implementazione espone le seguenti funzionalità richiamabili tramite i metodi HTTP GET/POST.
