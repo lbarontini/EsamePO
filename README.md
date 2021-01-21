@@ -14,7 +14,11 @@ Link alle sezioni:
 
 ## Funzionalità
 
-In conformità allo stile REST, la nostra implementazione espone le seguenti funzionalità richiamabili tramite i metodi HTTP GET/POST:
+In conformità allo stile REST, la nostra implementazione espone le seguenti funzionalità richiamabili tramite i metodi HTTP GET/POST.
+
+### Diagramma dei casi d'uso
+
+![use_cases](images/use_cases_diagram.png)
 
 ### Lista di tutti i TLD censiti
 
@@ -45,6 +49,8 @@ $ curl -s 'http://localhost:8080/listAll' | jq
 ]
 ```
 
+![listAll](images/listall_sequence.png)
+
 ### Informazioni relative a un TLD scelto
 
 Richiesta GET sul percorso `/info` col parametro `tld` fornito dall'utente
@@ -63,6 +69,8 @@ $ curl -s 'http://localhost:8080/info?tld=de' | jq
   ]
 }
 ```
+
+![info](images/info_sequence.png)
 
 ### TLD più numeroso, meno numeroso e media di domini presenti sui TLD nell'ultimo censimento
 
@@ -90,6 +98,8 @@ $ curl -s 'http://localhost:8080/stats' | jq
 }
 ```
 
+![stats](images/statistic_sequence.png)
+
 ### Quantità di domini in un TLD che contengono le parole fornite, ordinate per frequenza
 
 Richiesta POST sul percorso `/stats` inviando in formato JSON (MIME type `application/json`) il TLD scelto e un array contenente le parole da selezionare.
@@ -114,6 +124,8 @@ $ curl -s -H "Content-Type: application/json" -d '{"tld":"de","words": ["apple",
   }
 ]
 ```
+
+![wordstats](images/wordstats_sequence.png)
 
 ### Lista di TLD ordinati per numerosità, con la loro rispettiva descrizione
 
@@ -154,7 +166,13 @@ $ curl -s 'http://localhost:8080/rank?count=4' | jq
 ]
 ```
 
+![rank](images/rank_sequence.png)
+
 ## Realizzazione
+
+### Diagramma delle classi
+
+![class](images/class_diagram.png)
 
 Il progetto è realizzato tramite il framework Spring e in particolare di Spring Boot, che permette di creare uno scheletro partendo da una base convenzionale che include le dipendenze scelte (nel nostro caso un web server).
 
